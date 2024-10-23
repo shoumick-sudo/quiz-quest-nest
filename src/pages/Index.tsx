@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AdminLogin from "@/components/AdminLogin";
 import QuizList from "@/components/QuizList";
 import AddQuizForm from "@/components/AddQuizForm";
@@ -10,6 +10,14 @@ const Index = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
 
+  // Load quizzes from localStorage on component mount
+  useEffect(() => {
+    const savedQuizzes = localStorage.getItem('quizzes');
+    if (savedQuizzes) {
+      setQuizzes(JSON.parse(savedQuizzes));
+    }
+  }, []);
+
   const handleAddQuiz = (name: string, link: string) => {
     const newQuiz: Quiz = {
       id: Date.now().toString(),
@@ -17,7 +25,10 @@ const Index = () => {
       link,
       createdAt: new Date().toISOString(),
     };
-    setQuizzes([newQuiz, ...quizzes]);
+    const updatedQuizzes = [newQuiz, ...quizzes];
+    setQuizzes(updatedQuizzes);
+    // Save to localStorage
+    localStorage.setItem('quizzes', JSON.stringify(updatedQuizzes));
   };
 
   return (
