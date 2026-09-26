@@ -6,7 +6,8 @@ import { openSession, getSession, saveResponse, snapshot, finalize } from "./ses
 export function registerSectionTools(server, templateUri) {
   registerAppTool(server, "render_gre_section", {
     title: "Render GRE section",
-    description: "Render a timed GRE Verbal section with navigation, Mark for Review, answer changing, and final submission. Never include answer keys or explanations.",
+    description:
+      "Render a timed GRE Verbal section with navigation, Mark for Review, answer changing, and final submission. Never include answer keys or explanations.",
     inputSchema: { section },
     outputSchema: {
       section,
@@ -14,10 +15,13 @@ export function registerSectionTools(server, templateUri) {
       answeredQuestionIds: z.array(z.string()),
       markedQuestionIds: z.array(z.string())
     },
-    _meta: { ui: { resourceUri: templateUri }, "openai/outputTemplate": templateUri }
+    _meta: {
+      ui: { resourceUri: templateUri },
+      "openai/outputTemplate": templateUri
+    }
   }, async ({ section: raw }) => {
     const normalized = normalizeSection(raw);
-    const session = openSession(normalized);
+    const session = await openSession(normalized);
     return {
       structuredContent: snapshot(session),
       content: [{ type: "text", text: "Rendered GRE section " + normalized.sessionId + "." }]
@@ -31,10 +35,13 @@ export function registerSectionTools(server, templateUri) {
     outputSchema: { saved: z.boolean(), questionId: z.string() },
     _meta: { ui: { visibility: ["app"] } }
   }, async ({ sessionId, response: r }) => {
-    const session = getSession(sessionId);
+    const session = await getSession(sessionId);
     if (!session) throw new Error("Session expired");
-    if (!session.section.questions.some((q) => q.questionId === r.questionId)) throw new Error("Question not found");
-    saveResponse(session, r);
+    if (session.submitted) throw new Error("Section already submitted");
+    if (!session.section.questions.some((q) => q.questionId === r.questionId)) {
+      throw new Error("Question not found");
+    }
+    await saveResponse(session, r);
     return {
       structuredContent: { saved: true, questionId: r.questionId },
       content: [{ type: "text", text: "Saved " + r.questionId + "." }]
@@ -43,7 +50,8 @@ export function registerSectionTools(server, templateUri) {
 
   registerAppTool(server, "submit_gre_section", {
     title: "Finish GRE section",
-    description: "Finalize a GRE section and return responses, unanswered questions, review flags, and timing. Does not grade.",
+    description:
+      "Finalize a GRE section and return responses, unanswered questions, review flags, and timing. Does not grade.",
     inputSchema: {
       sessionId: z.string(),
       elapsedSeconds: z.number().nonnegative(),
@@ -66,11 +74,24 @@ export function registerSectionTools(server, templateUri) {
     },
     _meta: { ui: { visibility: ["app"] } }
   }, async (args) => {
-    const session = getSession(args.sessionId);
+    const session = await getSession(args.sessionId);
     if (!session) throw new Error("Session expired");
-    for (const r of args.fallbackResponses || []) saveResponse(session, r);
-    for (const id of args.fallbackMarkedQuestionIds || []) session.marked[id] = true;
-    const result = finalize(session, args.elapsedSeconds, args.timedOut);
+    if (session.submitted && session.result) {
+      return {
+        structuredContent: { result: session.result },
+        content: [{ type: "text", text: "GRE section was already submitted." }]
+      };
+    }
+
+    for (const r of args.fallbackResponses || []) {
+      await saveResponse(session, r);
+    }
+    for (const id of args.fallbackMarkedQuestionIds || []) {
+      const existing = session.responses[id] || { questionId: id };
+      await saveResponse(session, { ...existing, markedForReview: true });
+    }
+
+    const result = await finalize(session, args.elapsedSeconds, args.timedOut);
     return {
       structuredContent: { result },
       content: [{ type: "text", text: "GRE section submitted." }]
