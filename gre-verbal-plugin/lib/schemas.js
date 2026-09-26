@@ -4,6 +4,15 @@ export const choice = z.object({ id: z.string().min(1), label: z.string().min(1)
 export const blank = z.object({ id: z.string().min(1), label: z.string().optional(), choices: z.array(choice).min(2).max(8) });
 export const sentence = z.object({ id: z.string().min(1), text: z.string().min(1) });
 
+export const answerKey = z.object({
+  selected: z.array(z.string().min(1)).optional(),
+  blankSelections: z.array(z.object({
+    blankId: z.string().min(1),
+    choiceId: z.string().min(1)
+  })).optional(),
+  sentenceId: z.string().min(1).optional()
+});
+
 export const question = z.object({
   questionId: z.string().min(1),
   mode: z.enum(["practice", "test"]).default("practice"),
@@ -35,8 +44,12 @@ export const section = z.object({
 export const response = z.object({
   questionId: z.string().min(1),
   selected: z.array(z.string().min(1)).optional(),
-  blankSelections: z.array(z.object({ blankId: z.string().min(1), choiceId: z.string().min(1) })).optional(),
+  blankSelections: z.array(z.object({
+    blankId: z.string().min(1),
+    choiceId: z.string().min(1)
+  })).optional(),
   sentenceId: z.string().min(1).optional(),
+  learnerComment: z.string().max(6000).optional(),
   markedForReview: z.boolean().optional(),
   timeSpentSeconds: z.number().nonnegative().optional()
 });
