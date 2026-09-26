@@ -35,7 +35,8 @@ export function registerMasteryTools(server) {
     outputSchema: {
       masteryPacket: masteryPacketSchema,
       reviewTargetsCreated: z.number().int().min(0)
-    }
+    },
+    _meta: {}
   }, async ({ sessionId, learnerKey, evaluation: value }) => {
     const stored = await getStoredResult(sessionId);
     if (!stored) throw new Error("Session not found");
@@ -83,7 +84,8 @@ export function registerMasteryTools(server) {
         evaluation: z.any().nullable(),
         submitted: z.boolean()
       }).nullable()
-    }
+    },
+    _meta: {}
   }, async ({ sessionId }) => {
     const stored = await getStoredResult(sessionId);
     return {
