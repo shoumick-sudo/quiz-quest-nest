@@ -2,6 +2,7 @@ import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import { z } from "zod";
 import { evaluation, makeMasteryPacket } from "./mastery.js";
 import { getStoredResult, saveEvaluation } from "./session-store.js";
+import { ingestEvaluation } from "./progress-store.js";
 
 const masteryPacketSchema = z.object({
   packetVersion: z.string(),
@@ -25,29 +26,43 @@ export function registerMasteryTools(server) {
   registerAppTool(server, "record_gre_evaluation", {
     title: "Record GRE evaluation",
     description:
-      "After grading a completed GRE section, store a structured evaluation and return a mastery packet. Use concrete evidence only; do not infer mastery beyond the completed work.",
+      "After grading a completed GRE section, store a structured evaluation, feed its evidence into the spaced-review engine, and return a mastery packet. Use concrete evidence only; do not infer mastery beyond the completed work.",
     inputSchema: {
       sessionId: z.string().min(1),
+      learnerKey: z.string().min(1).optional(),
       evaluation
     },
     outputSchema: {
-      masteryPacket: masteryPacketSchema
+      masteryPacket: masteryPacketSchema,
+      reviewTargetsCreated: z.number().int().min(0)
     }
-  }, async ({ sessionId, evaluation: value }) => {
+  }, async ({ sessionId, learnerKey, evaluation: value }) => {
     const stored = await getStoredResult(sessionId);
     if (!stored) throw new Error("Session not found");
     if (!stored.submitted) throw new Error("Section must be submitted before evaluation");
 
     const packet = makeMasteryPacket(sessionId, value);
     await saveEvaluation(sessionId, packet);
+    const learningState = await ingestEvaluation(
+      sessionId,
+      packet,
+      learnerKey || "default"
+    );
+
+    const reviewTargetsCreated = learningState.reviewQueue
+      .filter((x) => x.sourceSessionId === sessionId)
+      .length;
 
     return {
-      structuredContent: { masteryPacket: packet },
+      structuredContent: {
+        masteryPacket: packet,
+        reviewTargetsCreated
+      },
       content: [{
         type: "text",
         text:
           "Stored GRE evaluation for " + sessionId +
-          ". Use the mastery packet to update the persistent GRE tracker when Drive access is available."
+          " and updated the spaced-review queue. Use the mastery packet as evidence when updating the persistent GRE tracker."
       }]
     };
   });
