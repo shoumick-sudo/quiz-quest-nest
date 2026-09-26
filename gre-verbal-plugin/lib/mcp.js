@@ -6,7 +6,7 @@ import { registerSectionTools } from "./tools-section.js";
 import { registerMasteryTools } from "./tools-mastery.js";
 import { registerLearningTools } from "./tools-learning.js";
 
-export const TEST_URI = "ui://gre-verbal/test-engine-v4.html";
+export const TEST_URI = "ui://gre-verbal/test-engine-v5.html";
 export const DASHBOARD_URI = "ui://gre-verbal/mastery-dashboard-v4.html";
 
 function read(path) {
@@ -36,10 +36,10 @@ function buildDashboardWidget() {
 export function createGreMcp() {
   const server = new McpServer({
     name: "gre-verbal-clickable-quiz",
-    version: "0.4.0"
+    version: "0.5.0"
   });
 
-  registerAppResource(server, "gre-test-engine-v4", TEST_URI, {}, async () => ({
+  registerAppResource(server, "gre-test-engine-v5", TEST_URI, {}, async () => ({
     contents: [{
       uri: TEST_URI,
       mimeType: RESOURCE_MIME_TYPE,
@@ -47,7 +47,7 @@ export function createGreMcp() {
       _meta: {
         ui: { prefersBorder: true },
         "openai/widgetDescription":
-          "GRE Verbal practice and test engine with timing, navigation, review flags, TC, SE, RC, select-in-passage, recovery, and mastery handoff."
+          "GRE Verbal practice and test engine with clickable answers, learner reasoning notes, immediate Practice-mode answer reveal, timed sections, recovery, and mastery handoff."
       }
     }]
   }));
