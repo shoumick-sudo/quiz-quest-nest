@@ -1,9 +1,9 @@
 {
   "name": "gre-verbal-clickable-quiz-plugin",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
-  "description": "MCP Apps GRE Verbal practice, testing, mastery dashboard, and spaced-retrieval engine.",
+  "description": "MCP Apps GRE Verbal tutor interface with reasoning notes, immediate practice feedback, sections, mastery dashboard, and spaced retrieval.",
   "scripts": {
     "start": "node server.js",
     "check": "node --check server.js",
