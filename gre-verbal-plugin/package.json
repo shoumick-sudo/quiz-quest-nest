@@ -1,9 +1,9 @@
 {
   "name": "gre-verbal-clickable-quiz-plugin",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "MCP Apps plugin that renders clickable GRE Verbal multiple-choice questions inside ChatGPT.",
+  "description": "MCP Apps GRE Verbal practice and test engine with clickable question types, section timing, navigation, and review state.",
   "scripts": {
     "start": "node server.js",
     "check": "node --check server.js"
