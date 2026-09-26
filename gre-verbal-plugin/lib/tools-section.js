@@ -36,7 +36,7 @@ export function registerSectionTools(server, templateUri) {
     _meta: { ui: { visibility: ["app"] } }
   }, async ({ sessionId, response: r }) => {
     const session = await getSession(sessionId);
-    if (!session) throw new Error("Session expired");
+    if (!session) throw new Error("Session unavailable");
     if (session.submitted) throw new Error("Section already submitted");
     if (!session.section.questions.some((q) => q.questionId === r.questionId)) {
       throw new Error("Question not found");
@@ -51,11 +51,12 @@ export function registerSectionTools(server, templateUri) {
   registerAppTool(server, "submit_gre_section", {
     title: "Finish GRE section",
     description:
-      "Finalize a GRE section and return responses, unanswered questions, review flags, and timing. Does not grade.",
+      "Finalize a GRE section and return responses, unanswered questions, review flags, and timing. Can reconstruct a lost server session from the widget's fallback section state. Does not grade.",
     inputSchema: {
       sessionId: z.string(),
       elapsedSeconds: z.number().nonnegative(),
       timedOut: z.boolean().optional(),
+      fallbackSection: section.optional(),
       fallbackResponses: z.array(response).optional(),
       fallbackMarkedQuestionIds: z.array(z.string()).optional()
     },
@@ -74,8 +75,20 @@ export function registerSectionTools(server, templateUri) {
     },
     _meta: { ui: { visibility: ["app"] } }
   }, async (args) => {
-    const session = await getSession(args.sessionId);
-    if (!session) throw new Error("Session expired");
+    let session = await getSession(args.sessionId);
+
+    if (!session && args.fallbackSection) {
+      const recovered = normalizeSection({
+        ...args.fallbackSection,
+        sessionId: args.sessionId
+      });
+      session = await openSession(recovered);
+    }
+
+    if (!session) {
+      throw new Error("Session unavailable and no fallback section was supplied");
+    }
+
     if (session.submitted && session.result) {
       return {
         structuredContent: { result: session.result },
@@ -94,7 +107,10 @@ export function registerSectionTools(server, templateUri) {
     const result = await finalize(session, args.elapsedSeconds, args.timedOut);
     return {
       structuredContent: { result },
-      content: [{ type: "text", text: "GRE section submitted." }]
+      content: [{
+        type: "text",
+        text: "GRE section submitted" + (args.fallbackSection ? " with recovery support." : ".")
+      }]
     };
   });
 }
