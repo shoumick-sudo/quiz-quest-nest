@@ -1,9 +1,9 @@
 {
   "name": "gre-verbal-clickable-quiz-plugin",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
-  "description": "MCP Apps GRE Verbal practice and test engine with clickable question types, section timing, navigation, and review state.",
+  "description": "MCP Apps GRE Verbal practice and test engine with durable-session support and mastery evidence handoff.",
   "scripts": {
     "start": "node server.js",
     "check": "node --check server.js"
@@ -11,6 +11,7 @@
   "dependencies": {
     "@modelcontextprotocol/ext-apps": "^1.0.1",
     "@modelcontextprotocol/sdk": "^1.20.2",
+    "pg": "^8.13.1",
     "zod": "^3.25.76"
   },
   "engines": {
