@@ -72,7 +72,8 @@ export function registerLearningTools(server, dashboardUri) {
     },
     outputSchema: {
       reviews: z.array(z.any())
-    }
+    },
+    _meta: {}
   }, async ({ learnerKey, limit, types }) => {
     const reviews = await getDueReviews({
       learnerKey: learnerKey || "default",
@@ -102,7 +103,8 @@ export function registerLearningTools(server, dashboardUri) {
     },
     outputSchema: {
       review: z.any()
-    }
+    },
+    _meta: {}
   }, async ({ learnerKey, reviewId, outcome, evidence }) => {
     const review = await recordReviewOutcome({
       learnerKey: learnerKey || "default",
@@ -147,7 +149,8 @@ export function registerLearningTools(server, dashboardUri) {
     outputSchema: {
       synced: z.boolean(),
       syncedAt: z.string()
-    }
+    },
+    _meta: {}
   }, async ({ learnerKey, source, skills, vocabulary }) => {
     const state = await syncMasterySnapshot({
       learnerKey: learnerKey || "default",
