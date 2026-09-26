@@ -6,7 +6,8 @@
   "description": "MCP Apps GRE Verbal practice and test engine with durable-session support and mastery evidence handoff.",
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js"
+    "check": "node --check server.js",
+    "test": "node --test"
   },
   "dependencies": {
     "@modelcontextprotocol/ext-apps": "^1.0.1",
