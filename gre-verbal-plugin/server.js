@@ -1,6 +1,8 @@
 import { createServer } from "node:http";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { createGreMcp } from "./lib/mcp.js";
+import { databaseHealth } from "./lib/database.js";
+import { sessionPersistenceMode } from "./lib/session-store.js";
 
 const port = Number(process.env.PORT || 8787);
 
@@ -19,16 +21,29 @@ const httpServer = createServer(async (req, res) => {
   }
 
   if (req.method === "GET" && url.pathname === "/") {
+    const db = await databaseHealth();
     res.writeHead(200, { "content-type": "application/json" });
-    return res.end(JSON.stringify({ service: "GRE Verbal Quiz", version: "0.2.0", mcp: "/mcp" }));
+    return res.end(JSON.stringify({
+      service: "GRE Verbal Quiz",
+      version: "0.3.0",
+      mcp: "/mcp",
+      sessionPersistence: sessionPersistenceMode(),
+      database: db
+    }));
   }
 
   if (url.pathname === "/mcp" && ["POST", "GET", "DELETE"].includes(req.method || "")) {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Expose-Headers", "Mcp-Session-Id");
     const mcp = createGreMcp();
-    const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
-    res.on("close", () => { transport.close(); mcp.close(); });
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+      enableJsonResponse: true
+    });
+    res.on("close", () => {
+      transport.close();
+      mcp.close();
+    });
     try {
       await mcp.connect(transport);
       await transport.handleRequest(req, res);
@@ -38,7 +53,16 @@ const httpServer = createServer(async (req, res) => {
     }
     return;
   }
+
   res.writeHead(404).end("Not Found");
 });
 
-httpServer.listen(port, () => console.log("GRE Verbal MCP v0.2.0 listening on port " + port));
+httpServer.listen(port, () => {
+  console.log(
+    "GRE Verbal MCP v0.3.0 listening on port " +
+    port +
+    " with " +
+    sessionPersistenceMode() +
+    " session persistence"
+  );
+});
