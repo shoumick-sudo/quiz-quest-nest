@@ -3,8 +3,9 @@ import { registerAppResource, RESOURCE_MIME_TYPE } from "@modelcontextprotocol/e
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerQuestionTools } from "./tools-question.js";
 import { registerSectionTools } from "./tools-section.js";
+import { registerMasteryTools } from "./tools-mastery.js";
 
-export const TEMPLATE_URI = "ui://gre-verbal/test-engine-v2.html";
+export const TEMPLATE_URI = "ui://gre-verbal/test-engine-v3.html";
 
 function read(path) {
   return readFileSync(new URL(path, import.meta.url), "utf8");
@@ -23,22 +24,27 @@ function buildWidget() {
 }
 
 export function createGreMcp() {
-  const server = new McpServer({ name: "gre-verbal-clickable-quiz", version: "0.2.0" });
+  const server = new McpServer({
+    name: "gre-verbal-clickable-quiz",
+    version: "0.3.0"
+  });
   const widgetHtml = buildWidget();
 
-  registerAppResource(server, "gre-test-engine-v2", TEMPLATE_URI, {}, async () => ({
+  registerAppResource(server, "gre-test-engine-v3", TEMPLATE_URI, {}, async () => ({
     contents: [{
       uri: TEMPLATE_URI,
       mimeType: RESOURCE_MIME_TYPE,
       text: widgetHtml,
       _meta: {
         ui: { prefersBorder: true },
-        "openai/widgetDescription": "GRE Verbal practice and test engine with timing, navigation, review flags, TC, SE, RC, and select-in-passage."
+        "openai/widgetDescription":
+          "GRE Verbal practice and test engine with timing, navigation, review flags, TC, SE, RC, select-in-passage, resumable sessions, and mastery handoff."
       }
     }]
   }));
 
   registerQuestionTools(server, TEMPLATE_URI);
   registerSectionTools(server, TEMPLATE_URI);
+  registerMasteryTools(server);
   return server;
 }
