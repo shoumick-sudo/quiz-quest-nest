@@ -1,6 +1,78 @@
-# GRE Verbal Clickable Quiz Plugin — v0.4
+# GRE Verbal Clickable Quiz Plugin — v0.5
 
 This MCP Apps plugin provides a GRE Verbal practice, testing, mastery-dashboard, and spaced-retrieval engine inside ChatGPT.
+
+## v0.5 learner reasoning space
+
+Every question now includes an optional writing area:
+
+**Your reasoning / note**
+
+The learner can write anything useful for instruction, including:
+- why an answer was chosen
+- which clue or sentence mattered
+- where the difficulty was
+- vocabulary uncertainty
+- confusion between two choices
+- a question for ChatGPT
+- any other note the learner wants preserved
+
+The note is submitted with the answer and is available to ChatGPT for diagnosis.
+
+## v0.5 immediate Practice feedback
+
+In **Practice mode**, the app can now reveal the answer immediately after Submit:
+
+- selected answer remains visible
+- correct answer is highlighted
+- incorrect selection is highlighted separately
+- Correct / Incorrect is shown immediately
+- the correct answer is displayed
+- no explanation is embedded in the widget
+
+ChatGPT gives the explanation afterward and should explicitly use the learner's written reasoning when diagnosing the response.
+
+For assessment integrity, **Test mode still does not reveal correctness until the test/section ends.**
+
+## Private grading key
+
+For Practice questions, `render_gre_question` accepts a private grading key. The server stores this key separately and does not return it in the pre-submission widget payload.
+
+After the learner submits, `submit_gre_answer` returns only the grading result needed for immediate feedback.
+
+## Google Drive source of truth
+
+Google Drive remains the authoritative learning record.
+
+The GRE Verbal Master Tracker now includes a **Question Notes** sheet for raw per-question records, including:
+- timestamp
+- session/question ID
+- source type
+- question type
+- difficulty
+- skill tags
+- learner answer
+- correctness
+- correct answer
+- learner comment / reasoning
+- elapsed time
+- later diagnosis / lesson / review information
+
+The widget returns a structured `driveRecord` after Practice submission. Its follow-up message instructs ChatGPT to append this record to the Drive tracker before continuing, and to update Skill Mastery, Error Log, Vocabulary Review, and Session Log when evidence is meaningful.
+
+The plugin itself does not authenticate directly to Google Drive; Drive writes are mediated by ChatGPT's already-connected Drive connector.
+
+## Render / Postgres role
+
+Render is **not** the source of truth for learning history.
+
+Render/Postgres is useful for:
+- keeping an active section alive across app/server restarts
+- restoring navigation and review flags
+- caching dashboard/review state for responsive UI
+- resuming a submitted session quickly
+
+If Render data is lost, the authoritative long-term learning record should still be reconstructable from Google Drive.
 
 ## Core test engine
 - single-answer MCQ
@@ -17,12 +89,13 @@ This MCP Apps plugin provides a GRE Verbal practice, testing, mastery-dashboard,
 - unanswered warning
 - timeout auto-submit
 - per-question timing
+- learner comments on section questions
 - widget-state restoration
-- recovery of final submission from client state if server state is lost
+- final-submission recovery from client state
 
-## v0.4 mastery dashboard
-The new `render_gre_dashboard` tool renders an interactive dashboard showing:
+## Mastery dashboard and spaced retrieval
 
+The dashboard shows:
 - authoritative mastery snapshot cache
 - evidence-based skill trends
 - review-due count
@@ -30,19 +103,11 @@ The new `render_gre_dashboard` tool renders an interactive dashboard showing:
 - recurring error categories
 - recent session accuracy
 - next priorities
-- Start Due Review and targeted-practice actions
-
-Google Drive remains the source of truth for mastery. The plugin dashboard is a cached visualization plus evidence collected from completed sessions.
-
-## v0.4 spaced retrieval
-The review engine stores retrieval targets rather than replaying old questions.
 
 Review target types:
 - `skill`
 - `error`
 - `vocab`
-
-After a completed evaluation, weak skills, meaningful error categories, and vocabulary weaknesses can automatically enter the review queue.
 
 Retrieval outcomes:
 - `again`
@@ -50,31 +115,10 @@ Retrieval outcomes:
 - `good`
 - `easy`
 
-Scheduling is deterministic and evidence-driven. Review questions should be generated in changed wording/context so the learner retrieves the principle rather than memorizing prior answers.
-
-## Vocabulary tracking
-Vocabulary review tracks:
-- exposures
-- successful retrievals
-- lapses
-- interval
-- next due time
-- current evidence status
-
-A word is not treated as mastered after a single correct response.
-
-## Mastery synchronization
-`sync_gre_mastery_snapshot` lets ChatGPT cache the current Google Drive mastery state in the dashboard without changing the source-of-truth rule.
-
-Supported mastery states:
-- UNKNOWN
-- INTRODUCED
-- DEVELOPING
-- PROFICIENT
-- MASTERED
-- REVIEW-DUE
+Review questions should use changed wording/context rather than replaying prior items.
 
 ## MCP tools
+
 ### Questions and sections
 - `render_gre_question`
 - `submit_gre_answer`
@@ -93,43 +137,36 @@ Supported mastery states:
 - `sync_gre_mastery_snapshot`
 
 ## Practice flow
-1. ChatGPT selects a weak or due target.
-2. The app renders one clickable question.
-3. Learner submits.
-4. ChatGPT diagnoses reasoning.
-5. If the question is a spaced review, ChatGPT records the retrieval outcome.
-6. The next target is selected adaptively.
+
+1. ChatGPT selects or generates a question.
+2. ChatGPT sends the visible question plus a private grading key to the app.
+3. Learner selects an answer.
+4. Learner optionally writes reasoning/comments.
+5. Learner presses Submit.
+6. Widget immediately shows Correct/Incorrect and the correct answer.
+7. ChatGPT receives the answer, learner comment, grading result, and Drive record.
+8. ChatGPT saves the record to Google Drive.
+9. ChatGPT explains and diagnoses the reasoning.
+10. ChatGPT adapts the next question.
 
 ## Test flow
+
 1. ChatGPT renders a timed section.
-2. Learner answers with no feedback.
+2. Learner answers and may write private notes, but receives no correctness feedback.
 3. Section submits.
 4. ChatGPT grades and diagnoses.
-5. `record_gre_evaluation` stores the structured evidence.
-6. Weaknesses enter the review queue.
-7. ChatGPT updates the authoritative Google Drive tracker using the mastery packet.
-
-## Persistence
-The runtime supports:
-1. Postgres when `DATABASE_URL` is configured.
-2. Memory fallback when it is not.
-
-Postgres stores section state and the v0.4 learning-state document. The widget also keeps client-side recovery state.
-
-A Render Postgres database named `gre-verbal-session-db` has been provisioned. Until `DATABASE_URL` is linked in the Render service, the deployed app uses memory fallback plus client-state recovery.
-
-## Assessment integrity
-Do not send answer keys or explanations to widget-visible question inputs. The plugin does not grade official or generated questions. ChatGPT evaluates only after submission.
+5. Learner comments are preserved in the Drive Question Notes log.
+6. `record_gre_evaluation` stores structured evidence.
+7. ChatGPT updates the authoritative Google Drive tracker.
 
 ## Production
+
 Health:
 `https://gre-verbal-clickable-quiz.onrender.com`
 
 MCP:
 `https://gre-verbal-clickable-quiz.onrender.com/mcp`
 
-## Current limits
-- Google Drive writes remain mediated by ChatGPT's Drive connector
-- no server-side ETS item bank
-- no plugin-side grading
-- cross-device persistent learning state requires the Render Postgres connection to be enabled
+## Remaining infrastructure note
+
+A Render Postgres database is provisioned but not required for the Google Drive learning record. Linking `DATABASE_URL` is only for stronger app/session continuity and cache persistence.
