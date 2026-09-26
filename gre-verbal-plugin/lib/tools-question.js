@@ -36,8 +36,10 @@ export function registerQuestionTools(server, templateUri) {
     },
     outputSchema: { question },
     _meta: {
-      ui: { resourceUri: templateUri },
-      "openai/outputTemplate": templateUri
+      ui: { resourceUri: templateUri, visibility: ["model", "app"] },
+      "openai/outputTemplate": templateUri,
+      "openai/toolInvocation/invoking": "Loading GRE question…",
+      "openai/toolInvocation/invoked": "GRE question ready"
     }
   }, async ({ question: q, grading }) => {
     const normalized = normalizeQuestion(q);
@@ -76,7 +78,10 @@ export function registerQuestionTools(server, templateUri) {
       grading: gradingResultSchema,
       driveRecord: z.any()
     },
-    _meta: { ui: { visibility: ["app"] } }
+    _meta: {
+      ui: { visibility: ["app"] },
+      "openai/widgetAccessible": true
+    }
   }, async (args) => {
     const registered = getRegisteredQuestion(args.questionId);
     const grading = gradeQuestion(args.questionId, args);

@@ -25,7 +25,7 @@ const httpServer = createServer(async (req, res) => {
     res.writeHead(200, { "content-type": "application/json" });
     return res.end(JSON.stringify({
       service: "GRE Verbal Quiz",
-      version: "0.5.0",
+      version: "0.5.1",
       capabilities: [
         "clickable-questions",
         "learner-reasoning-notes",
@@ -70,7 +70,7 @@ const httpServer = createServer(async (req, res) => {
 
 httpServer.listen(port, () => {
   console.log(
-    "GRE Verbal MCP v0.5.0 listening on port " +
+    "GRE Verbal MCP v0.5.1 listening on port " +
     port +
     " with " +
     sessionPersistenceMode() +
