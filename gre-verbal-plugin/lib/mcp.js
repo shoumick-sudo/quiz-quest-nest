@@ -4,14 +4,16 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerQuestionTools } from "./tools-question.js";
 import { registerSectionTools } from "./tools-section.js";
 import { registerMasteryTools } from "./tools-mastery.js";
+import { registerLearningTools } from "./tools-learning.js";
 
-export const TEMPLATE_URI = "ui://gre-verbal/test-engine-v3.html";
+export const TEST_URI = "ui://gre-verbal/test-engine-v4.html";
+export const DASHBOARD_URI = "ui://gre-verbal/mastery-dashboard-v4.html";
 
 function read(path) {
   return readFileSync(new URL(path, import.meta.url), "utf8");
 }
 
-function buildWidget() {
+function buildTestWidget() {
   const css = read("../public/gre-test-engine.css");
   const js = [
     read("../public/ui-state.js"),
@@ -23,28 +25,49 @@ function buildWidget() {
     js + "</script></body></html>";
 }
 
+function buildDashboardWidget() {
+  const css = read("../public/dashboard.css");
+  const js = read("../public/dashboard.js");
+  return "<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>" +
+    css + "</style></head><body><main id=\"app\"></main><script type=\"module\">" +
+    js + "</script></body></html>";
+}
+
 export function createGreMcp() {
   const server = new McpServer({
     name: "gre-verbal-clickable-quiz",
-    version: "0.3.0"
+    version: "0.4.0"
   });
-  const widgetHtml = buildWidget();
 
-  registerAppResource(server, "gre-test-engine-v3", TEMPLATE_URI, {}, async () => ({
+  registerAppResource(server, "gre-test-engine-v4", TEST_URI, {}, async () => ({
     contents: [{
-      uri: TEMPLATE_URI,
+      uri: TEST_URI,
       mimeType: RESOURCE_MIME_TYPE,
-      text: widgetHtml,
+      text: buildTestWidget(),
       _meta: {
         ui: { prefersBorder: true },
         "openai/widgetDescription":
-          "GRE Verbal practice and test engine with timing, navigation, review flags, TC, SE, RC, select-in-passage, resumable sessions, and mastery handoff."
+          "GRE Verbal practice and test engine with timing, navigation, review flags, TC, SE, RC, select-in-passage, recovery, and mastery handoff."
       }
     }]
   }));
 
-  registerQuestionTools(server, TEMPLATE_URI);
-  registerSectionTools(server, TEMPLATE_URI);
+  registerAppResource(server, "gre-mastery-dashboard-v4", DASHBOARD_URI, {}, async () => ({
+    contents: [{
+      uri: DASHBOARD_URI,
+      mimeType: RESOURCE_MIME_TYPE,
+      text: buildDashboardWidget(),
+      _meta: {
+        ui: { prefersBorder: true },
+        "openai/widgetDescription":
+          "GRE Verbal mastery dashboard showing source-of-truth snapshot cache, evidence trends, review-due targets, vocabulary, recurring errors, recent sessions, and next priorities."
+      }
+    }]
+  }));
+
+  registerQuestionTools(server, TEST_URI);
+  registerSectionTools(server, TEST_URI);
   registerMasteryTools(server);
+  registerLearningTools(server, DASHBOARD_URI);
   return server;
 }
