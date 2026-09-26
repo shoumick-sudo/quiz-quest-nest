@@ -1,0 +1,20 @@
+{
+  "question": {
+    "questionId": "demo-tc-001",
+    "mode": "practice",
+    "sourceLabel": "GENERATED-PRACTICE",
+    "questionType": "TC",
+    "difficulty": "EASY",
+    "instructions": "Select the answer that best completes the sentence.",
+    "stem": "Although the report was initially dismissed, later evidence made its central claim seem increasingly ______.",
+    "choiceMode": "single",
+    "choices": [
+      {"id":"A","label":"untenable"},
+      {"id":"B","label":"credible"},
+      {"id":"C","label":"peripheral"},
+      {"id":"D","label":"arbitrary"},
+      {"id":"E","label":"redundant"}
+    ],
+    "progress": {"current":1,"total":5}
+  }
+}
