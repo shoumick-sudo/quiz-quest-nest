@@ -36,7 +36,19 @@ export async function ensureSchema() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
-    CREATE INDEX IF NOT EXISTS gre_sessions_updated_idx ON gre_sessions(updated_at);
+
+    CREATE INDEX IF NOT EXISTS gre_sessions_updated_idx
+      ON gre_sessions(updated_at);
+
+    CREATE TABLE IF NOT EXISTS gre_learning_state (
+      learner_key TEXT PRIMARY KEY,
+      state_json JSONB NOT NULL DEFAULT '{}'::jsonb,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE INDEX IF NOT EXISTS gre_learning_state_updated_idx
+      ON gre_learning_state(updated_at);
   `);
   schemaReady = true;
 }
