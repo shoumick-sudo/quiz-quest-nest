@@ -1,0 +1,50 @@
+{
+  "section": {
+    "sessionId": "demo-verbal-001",
+    "title": "GRE Verbal Demo Section",
+    "mode": "test",
+    "durationSeconds": 1080,
+    "questions": [
+      {
+        "questionId": "demo-tc-2blank",
+        "sourceLabel": "GENERATED-PRACTICE",
+        "questionType": "TC",
+        "difficulty": "MEDIUM",
+        "instructions": "For each blank, select one entry.",
+        "stem": "The critic's prose was simultaneously ______ and ______.",
+        "responseType": "tc_blanks",
+        "blanks": [
+          {"id":"blank1","label":"Blank (i)","choices":[{"id":"A","label":"graceful"},{"id":"B","label":"clumsy"},{"id":"C","label":"perfunctory"}]},
+          {"id":"blank2","label":"Blank (ii)","choices":[{"id":"D","label":"uncompromising"},{"id":"E","label":"transparent"},{"id":"F","label":"derivative"}]}
+        ]
+      },
+      {
+        "questionId": "demo-se",
+        "sourceLabel": "GENERATED-PRACTICE",
+        "questionType": "SE",
+        "difficulty": "MEDIUM",
+        "stem": "Because the witness's account changed repeatedly, the investigators regarded it as ______.",
+        "responseType": "multi",
+        "choices": [
+          {"id":"A","label":"reliable"},{"id":"B","label":"dubious"},{"id":"C","label":"suspect"},
+          {"id":"D","label":"lucid"},{"id":"E","label":"meticulous"},{"id":"F","label":"unequivocal"}
+        ]
+      },
+      {
+        "questionId": "demo-rc-select",
+        "sourceLabel": "GENERATED-PRACTICE",
+        "questionType": "RC",
+        "difficulty": "HARD",
+        "instructions": "Select the sentence that best answers the question.",
+        "stem": "Which sentence most directly states the author's central reservation?",
+        "responseType": "select_in_passage",
+        "passageSentences": [
+          {"id":"s1","text":"The new model explains several observations that older accounts left unresolved."},
+          {"id":"s2","text":"Its advocates therefore describe it as a decisive improvement."},
+          {"id":"s3","text":"Yet the model depends on measurements whose reliability has not been independently established."},
+          {"id":"s4","text":"Further experiments may determine whether that concern is substantial."}
+        ]
+      }
+    ]
+  }
+}
