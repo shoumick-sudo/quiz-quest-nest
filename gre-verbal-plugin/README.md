@@ -1,13 +1,13 @@
-# GRE Verbal Clickable Quiz Plugin — v0.2
+# GRE Verbal Clickable Quiz Plugin — v0.3
 
-This MCP Apps plugin provides a GRE Verbal practice and test engine inside ChatGPT.
+This MCP Apps plugin provides a GRE Verbal practice, testing, and mastery-evidence engine inside ChatGPT.
 
 ## Question engine
 - single-answer MCQ
 - multi-select MCQ
 - Sentence Equivalence with exactly two selections
 - Text Completion with 1–3 independent blanks
-- RC/argument passage questions
+- RC / argument passage questions
 - select-in-passage sentence selection
 - source, difficulty, and skill metadata
 
@@ -22,33 +22,76 @@ This MCP Apps plugin provides a GRE Verbal practice and test engine inside ChatG
 - timeout auto-submit
 - per-question time capture
 - widget-state restoration
-- server-side session state with a 6-hour TTL
+- resumable server-side section sessions
+
+## v0.3 persistence
+The runtime supports two persistence modes:
+
+1. **Postgres** when `DATABASE_URL` is configured.
+2. **Memory fallback** when no database is configured.
+
+The Postgres adapter stores:
+- section definition
+- saved responses
+- review flags
+- submission state
+- final section result
+- post-test mastery evaluation packet
+
+The app health endpoint reports the active persistence mode and database health.
+
+## Mastery handoff
+After ChatGPT grades a completed section, it can call:
+
+- `record_gre_evaluation`
+
+This stores structured evidence including:
+- accuracy
+- skill breakdown
+- error categories
+- vocabulary weaknesses
+- mastery evidence
+- official-item exposure status
+- pacing summary
+- next priorities
+
+The tool returns a **mastery packet** intended for the project's persistent Google Drive tracker.
+
+To resume analysis later, ChatGPT can call:
+
+- `get_gre_session_result`
+
+That retrieves the stored section result and any saved evaluation.
 
 ## MCP tools
-- render_gre_question — one-at-a-time Teach/Practice question
-- render_gre_section — full diagnostic or timed section
-- save_gre_response — widget-only response persistence
-- submit_gre_answer — standalone response submission
-- submit_gre_section — section finalization and structured response summary
+- `render_gre_question`
+- `submit_gre_answer`
+- `render_gre_section`
+- `save_gre_response`
+- `submit_gre_section`
+- `record_gre_evaluation`
+- `get_gre_session_result`
 
 ## Assessment integrity
-Do not put answer keys or explanations into plugin inputs. The plugin records learner responses; ChatGPT grades only after submission when the answer key is available in context.
+Do not put answer keys or explanations into widget-visible question inputs. The plugin records learner responses. ChatGPT grades after submission when the answer key is available in context.
 
 ## Recommended Project behavior
-Use render_gre_question for one-at-a-time teaching and practice. Use render_gre_section for diagnostics, timed sections, and GRE-section simulations. In Practice mode, evaluate only after submission. In Test mode, provide no correctness feedback until the section is submitted.
+Use `render_gre_question` for one-at-a-time teaching and practice. Use `render_gre_section` for diagnostics, timed sections, and GRE-section simulations. During Test mode, provide no correctness feedback until submission. After grading, call `record_gre_evaluation`, then use the returned mastery packet as evidence when updating the Drive tracker.
 
 ## Runtime
-Health: http://localhost:8787/
-MCP: http://localhost:8787/mcp
+Local health: `http://localhost:8787/`
+Local MCP: `http://localhost:8787/mcp`
 
 Production MCP:
-https://gre-verbal-clickable-quiz.onrender.com/mcp
+`https://gre-verbal-clickable-quiz.onrender.com/mcp`
+
+## Remaining infrastructure step
+A free Render Postgres database has been provisioned for durable sessions. The web service still needs its `DATABASE_URL` environment variable linked to that database. Until that is done, v0.3 automatically falls back to in-memory sessions.
 
 ## Current limits
-- server session storage is in memory and can be lost on a host restart
-- no authenticated cross-device persistence yet
-- no direct Google Drive writes from the plugin
+- direct Google Drive writes are still handled by ChatGPT's Drive connector rather than the plugin
 - no grading inside the plugin
 - no ETS item bank stored on the server
+- Render free Postgres has a provider-defined expiration period
 
 Long-term mastery remains in the project's Google Drive tracker.
