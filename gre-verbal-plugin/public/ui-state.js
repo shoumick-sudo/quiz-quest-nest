@@ -5,7 +5,7 @@ function rpc(method,params){return new Promise((resolve,reject)=>{const id=++rpc
 function notify(method,params){window.parent.postMessage({jsonrpc:"2.0",method,params},"*")}
 window.addEventListener("message",(e)=>{if(e.source!==window.parent)return;const m=e.data;if(!m||m.jsonrpc!=="2.0")return;if(typeof m.id==="number"){const p=pending.get(m.id);if(!p)return;pending.delete(m.id);m.error?p.reject(m.error):p.resolve(m.result)}else if(m.method==="ui/notifications/tool-result")hydrate(m.params)});
 
-const bridgeReady=(async()=>{try{await rpc("ui/initialize",{appInfo:{name:"gre-verbal-test-engine",version:"0.2.0"},appCapabilities:{},protocolVersion:"2026-01-26"});notify("ui/notifications/initialized",{})}catch(e){console.error(e)}})();
+const bridgeReady=(async()=>{try{await rpc("ui/initialize",{appInfo:{name:"gre-verbal-test-engine",version:"0.4.0"},appCapabilities:{},protocolVersion:"2026-01-26"});notify("ui/notifications/initialized",{})}catch(e){console.error(e)}})();
 
 async function callTool(name,args){if(window.openai?.callTool)return window.openai.callTool(name,args);await bridgeReady;return rpc("tools/call",{name,arguments:args})}
 function typeOf(q){if(q.responseType)return q.responseType;if(q.questionType==="SE")return"multi";if(q.blanks?.length)return"tc_blanks";if(q.passageSentences?.length)return"select_in_passage";return q.choiceMode||"single"}
